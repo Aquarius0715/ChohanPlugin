@@ -1,0 +1,6 @@
+name: AquaChohanPlugin
+version: 1.0.0
+main: aquarius0715.aquachohanplugin.AquaChohanPlugin
+api-version: 1.12.2
+commands:
+  ac:
