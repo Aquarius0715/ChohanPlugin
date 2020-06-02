@@ -6,6 +6,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,10 +17,15 @@ public final class AquaChohanPlugin extends JavaPlugin {
     Map<String, Integer> c_result = new HashMap<String, Integer>();
     Map<String, Integer> h_result = new HashMap<String, Integer>();
     int rand = new Random().nextInt(1);
-
     int Playercount = 0;
-
     boolean gamestats = false;
+    int time = 30;
+
+    private AquaChohanPlugin plugin;
+
+    public void newGame(AquaChohanPlugin plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public void onEnable() {
@@ -41,12 +47,13 @@ public final class AquaChohanPlugin extends JavaPlugin {
                 return true;
             }
             if (args.length == 0) {
-                sender.sendMessage("==========AquaChohanPlugin==========");
+                sender.sendMessage("==========ChohanPlugin==========");
                 sender.sendMessage("/ac create : 新しい丁半のゲームを始めます。");
                 sender.sendMessage("/ac c : 始まったゲームに「丁」として参加します。");
                 sender.sendMessage("/ac h : 始まったゲームに「半」として参加します。");
-                sender.sendMessage("==========AquaChohanPlugin==========");
+                sender.sendMessage("==========ChohanPlugin==========");
             }
+
 
             if (args.length == 1) {
                 if (args[0].equalsIgnoreCase("create")) {
@@ -54,15 +61,8 @@ public final class AquaChohanPlugin extends JavaPlugin {
 
                     Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + player.getDisplayName() + "さんが新しく丁半を始めました");
 
-                    try {
-                        TimeCount();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    TimeCount();
                     gamestats = true;
-
-                    Game();
-
                     return true;
                 }
 
@@ -115,41 +115,40 @@ public final class AquaChohanPlugin extends JavaPlugin {
         return false;
     }
 
-    public void TimeCount() throws InterruptedException {
 
-        Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "残り時間は30秒です");
+    public void TimeCount() {
 
-        Thread.sleep(10000);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (gamestats) {
+                    if (plugin.time >= -2) {
+                        if (plugin.time % 10 == 0 || plugin.time <= 5) {
+                            Bukkit.broadcastMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "終了まであと" + plugin.time + "秒です");
+                        }
+                    }
 
-        Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "残り時間は20秒です");
-
-        Thread.sleep(10000);
-
-        Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "残り時間は10秒です");
-
-        Thread.sleep(5000);
-
-        Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "残り時間は5秒です");
-
-        Thread.sleep(1000);
-
-        Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "残り時間は4秒です");
-
-        Thread.sleep(1000);
-
-        Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "残り時間は3秒です");
-
-        Thread.sleep(1000);
-
-        Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "残り時間は2秒です");
-
-        Thread.sleep(1000);
-
-        Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "残り時間は1秒です");
-
-        Thread.sleep(1000);
-
-        Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "締め切りました！");
+                    if (plugin.time == 0) {
+                        if (Playercount < 2) {
+                            Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "人数が足りないためゲームを停止します");
+                            GameEnd();
+                            return;
+                        } else {
+                            Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "サイコロを引いています");
+                            if (plugin.time == -3) {
+                                Game();
+                                cancel();
+                                return;
+                            }
+                        }
+                    }
+                } else {
+                    cancel();
+                    return;
+                }
+                plugin.time--;
+            }
+        }.runTaskTimer(plugin, 0, 20); // ここでエラー発生
     }
 
     public void GameEnd() {
@@ -163,15 +162,9 @@ public final class AquaChohanPlugin extends JavaPlugin {
         h_result.clear();
 
         Bukkit.broadcastMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "丁半が終了しました");
-
     }
 
     public void Game() {
-
-        if (Playercount > 2) {
-            Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "人数が足りないため丁半を停止します");
-            GameEnd();
-        }
 
         if (rand == 0) {
             Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "丁の勝利！");
