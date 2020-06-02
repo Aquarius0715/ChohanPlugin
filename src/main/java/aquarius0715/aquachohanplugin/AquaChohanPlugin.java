@@ -16,7 +16,7 @@ public final class AquaChohanPlugin extends JavaPlugin {
 
     Map<String, Integer> c_result = new HashMap<String, Integer>();
     Map<String, Integer> h_result = new HashMap<String, Integer>();
-    int rand = new Random().nextInt(1);
+    int rand = new Random().nextInt(5);
     int Playercount = 0;
     boolean gamestats = false;
     int time = 30;
@@ -29,6 +29,9 @@ public final class AquaChohanPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        getCommand("ac").setExecutor(this);
+        newGame(this);
+
         // Plugin startup logic
 
     }
@@ -56,8 +59,12 @@ public final class AquaChohanPlugin extends JavaPlugin {
 
 
             if (args.length == 1) {
+                Player player = (Player) sender;
                 if (args[0].equalsIgnoreCase("create")) {
-                    Player player = (Player) sender;
+                    if (gamestats) {
+                        player.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "丁半はすでに始まっています。");
+                        return false;
+                    }
 
                     Bukkit.broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + player.getDisplayName() + "さんが新しく丁半を始めました");
 
@@ -66,49 +73,47 @@ public final class AquaChohanPlugin extends JavaPlugin {
                     return true;
                 }
 
-                if (args.length == 1) {
-                    if (args[0].equalsIgnoreCase("c")) {
-                        Player c_player = (Player) sender;
-                        if (gamestats == false) {
-                            Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "丁半は始まっていません");
-                            return false;
-                        }
-                        for (String key : c_result.keySet()) {
-                            for (String key1 : c_result.keySet()) {
-                                if (key == c_player.getDisplayName() || key1 == c_player.getDisplayName()) {
-                                    c_player.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "貴方はすでに参加しています");
-                                    return false;
-                                }
+                if (args[0].equalsIgnoreCase("c")) {
+                    Player c_player = (Player) sender;
+                    if (!gamestats) {
+                        Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "丁半は始まっていません");
+                        return false;
+                    }
+                    for (String key : c_result.keySet()) {
+                        for (String key1 : c_result.keySet()) {
+                            if (key == c_player.getDisplayName() || key1 == c_player.getDisplayName()) {
+                                c_player.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "貴方はすでに参加しています");
+                                return false;
                             }
                         }
-
-                        Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + c_player.getDisplayName() + "さんが丁に参加しました");
-
-                        c_result.put(c_player.getDisplayName(), 0);
-
-                        Playercount++;
                     }
-                    if (args[0].equalsIgnoreCase("h")) {
-                        Player h_player = (Player) sender;
-                        if (gamestats == false) {
-                            Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "丁半は始まっていません");
-                            return false;
-                        }
-                        for (String key : c_result.keySet()) {
-                            for (String key1 : c_result.keySet()) {
-                                if (key == h_player.getDisplayName() || key1 == h_player.getDisplayName()) {
-                                    h_player.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "貴方はすでに参加しています");
-                                    return false;
-                                }
+
+                    Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + c_player.getDisplayName() + "さんが丁に参加しました");
+
+                    c_result.put(c_player.getDisplayName(), 0);
+
+                    Playercount++;
+                }
+                if (args[0].equalsIgnoreCase("h")) {
+                    Player h_player = (Player) sender;
+                    if (!gamestats) {
+                        Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "丁半は始まっていません");
+                        return false;
+                    }
+                    for (String key : c_result.keySet()) {
+                        for (String key1 : c_result.keySet()) {
+                            if (key == h_player.getDisplayName() || key1 == h_player.getDisplayName()) {
+                                h_player.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "貴方はすでに参加しています");
+                                return false;
                             }
                         }
-
-                        Bukkit.broadcastMessage(ChatColor.GREEN + "" + ChatColor.BOLD + h_player.getDisplayName() + "さんが半に参加しました");
-
-                        h_result.put(h_player.getDisplayName(), 1);
-
-                        Playercount++;
                     }
+
+                    Bukkit.broadcastMessage(ChatColor.GREEN + "" + ChatColor.BOLD + h_player.getDisplayName() + "さんが半に参加しました");
+
+                    h_result.put(h_player.getDisplayName(), 1);
+
+                    Playercount++;
                 }
             }
         }
@@ -132,15 +137,11 @@ public final class AquaChohanPlugin extends JavaPlugin {
                         if (Playercount < 2) {
                             Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "人数が足りないためゲームを停止します");
                             GameEnd();
-                            return;
                         } else {
                             Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "サイコロを引いています");
-                            if (plugin.time == -3) {
-                                Game();
-                                cancel();
-                                return;
-                            }
+                            Game();
                         }
+                        return;
                     }
                 } else {
                     cancel();
@@ -148,7 +149,7 @@ public final class AquaChohanPlugin extends JavaPlugin {
                 }
                 plugin.time--;
             }
-        }.runTaskTimer(plugin, 0, 20); // ここでエラー発生
+        }.runTaskTimer(plugin, 0, 20);
     }
 
     public void GameEnd() {
@@ -161,12 +162,14 @@ public final class AquaChohanPlugin extends JavaPlugin {
 
         h_result.clear();
 
+        time = 30;
         Bukkit.broadcastMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "丁半が終了しました");
     }
 
     public void Game() {
 
-        if (rand == 0) {
+        if (rand % 2 == 0) {
+            Bukkit.broadcastMessage(ChatColor.YELLOW + "" + ChatColor.BOLD + rand + "が出ました");
             Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "丁の勝利！");
             for (String key : c_result.keySet()) {
                 int value = c_result.get(key);
@@ -174,7 +177,8 @@ public final class AquaChohanPlugin extends JavaPlugin {
             }
             GameEnd();
         }
-        if (rand == 1) {
+        if (!(rand % 2 == 0)) {
+            Bukkit.broadcastMessage(ChatColor.YELLOW + "" + ChatColor.BOLD + rand + "が出ました");
             Bukkit.broadcastMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "半の勝利！");
             for (String key : h_result.keySet()) {
                 int value = h_result.get(key);
